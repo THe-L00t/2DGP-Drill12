@@ -120,19 +120,19 @@ class Zombie:
         return BehaviorTree.SUCCESS
 
 
-    def if_boy_nearby(self, distance):
+    def is_boy_nearby(self, distance):
         if self.distance_less_than(common.boy.x, common.boy.y, self.x, self.y, distance):
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.FAIL
 
-    def zombie_have_more_balls(self):
+    def has_more_balls(self):
         if self.ball_count >= common.boy.ball_count:
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.FAIL
 
-    def boy_have_more_balls(self):
+    def is_boy_stronger(self):
         if self.ball_count < common.boy.ball_count:
             return BehaviorTree.SUCCESS
         else:
@@ -169,9 +169,9 @@ class Zombie:
 
         root = wander = Sequence('Wander', a3, a2)
 
-        c1 = Condition('소년이 근처에 있는가?', self.if_boy_nearby, 7)
-        c2 = Condition('좀비가 소년보다 공을 더 많이 가지고 있는가?', self.zombie_have_more_balls)
-        c3 = Condition('좀비가 소년보다 공을 적게 가지고 있는가?', self.boy_have_more_balls)
+        c1 = Condition('소년이 근처에 있는가?', self.is_boy_nearby, 7)
+        c2 = Condition('좀비가 소년보다 공을 더 많이 가지고 있는가?', self.has_more_balls)
+        c3 = Condition('좀비가 소년보다 공을 적게 가지고 있는가?', self.is_boy_stronger)
         a4 = Action('소년을 추적', self.move_to_boy)
         a5 = Action('소년에게서 도망', self.escape_from_boy)
 
