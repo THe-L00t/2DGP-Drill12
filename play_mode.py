@@ -9,6 +9,8 @@ from boy import Boy
 from ball import Ball
 from zombie import Zombie
 from ground import Ground
+import common
+
 
 def handle_events():
     events = get_events()
@@ -28,6 +30,7 @@ def init():
 
     global boy
     boy = Boy()
+    common.boy = boy
     game_world.add_object(boy, 2)
     game_world.add_collision_pair('boy:ball', boy, None)
 
@@ -61,4 +64,3 @@ def pause():
 
 def resume():
     pass
-

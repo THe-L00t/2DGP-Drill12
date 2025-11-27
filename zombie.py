@@ -3,7 +3,7 @@ from pico2d import *
 import random
 import math
 
-from sdl2.ext import common
+import common
 
 import game_framework
 import game_world
@@ -49,10 +49,11 @@ class Zombie:
 
 
         self.tx, self.ty = 1000, 1000
+        self.build_behavior_tree()
         self.patrol_locations = [(43,274), (1118,274), (1050,494), (575,804), (235,991), (575, 804), (1050,494), (1118,274)]
         self.loc_no = 0
 
-        self.build_behavior_tree()
+
 
 
     def get_bb(self):
@@ -75,6 +76,7 @@ class Zombie:
 
 
         draw_rectangle(*self.get_bb())
+        draw_circle(self.x, self.y, int(7.0 * PIXEL_PER_METER), 255, 255, 255)
 
     def handle_event(self, event):
         pass
@@ -103,7 +105,6 @@ class Zombie:
         distance = RUN_SPEED_PPS * game_framework.frame_time
         self.x += distance * math.cos(self.dir)
         self.y += distance * math.sin(self.dir)
-        pass
 
 
 
@@ -139,13 +140,11 @@ class Zombie:
         else:
             return BehaviorTree.RUNNING
 
-
-
     def get_patrol_location(self):
         self.tx, self.ty = self.patrol_locations[self.loc_no]
         self.loc_no = (self.loc_no +1) % len(self.patrol_locations)
         return BehaviorTree.SUCCESS
-    
+
 
 
     def build_behavior_tree(self):
@@ -161,7 +160,8 @@ class Zombie:
         root = chase_boy = Sequence('소년을 추적', c1, a4)
 
         root = chase_or_flee = Selector('추적 또는 배회', chase_boy, wander)
+
+        a5 = Action('순찰 위치 가져오기', self.get_patrol_location)
+        root = patrol = Sequence('순찰', a5, a2)
         self.bt = BehaviorTree(root)
         pass
-
-
