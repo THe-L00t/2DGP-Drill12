@@ -2,6 +2,9 @@ from pico2d import *
 
 import random
 import math
+
+from sdl2.ext import common
+
 import game_framework
 import game_world
 from behavior_tree import BehaviorTree, Action, Sequence, Condition, Selector
@@ -46,7 +49,8 @@ class Zombie:
 
 
         self.tx, self.ty = 1000, 1000
-        # 여기를 채우시오.
+        self.patrol_locations = [(43,274), (1118,274), (1050,494), (575,804), (235,991), (575, 804), (1050,494), (1118,274)]
+        self.loc_no = 0
 
         self.build_behavior_tree()
 
@@ -57,7 +61,7 @@ class Zombie:
 
     def update(self):
         self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION
-        # fill here
+        self.bt.run()
 
 
     def draw(self):
@@ -81,51 +85,83 @@ class Zombie:
 
 
     def set_target_location(self, x=None, y=None):
-        # 여기를 채우시오.
-        pass
+        if not x or not y:
+            raise ValueError('Location should be given')
+        self.tx, self.ty = x, y
+        return BehaviorTree.SUCCESS
 
 
 
     def distance_less_than(self, x1, y1, x2, y2, r):
-        # 여기를 채우시오.
-        pass
+        distance2 = (x1 - x2)**2 + (y1 - y2)**2
+        return distance2 < (PIXEL_PER_METER*r)**2
 
 
 
     def move_little_to(self, tx, ty):
-        # 여기를 채우시오.
+        self.dir = math.atan2(ty - self.y, tx - self.x)
+        distance = RUN_SPEED_PPS * game_framework.frame_time
+        self.x += distance * math.cos(self.dir)
+        self.y += distance * math.sin(self.dir)
         pass
 
 
 
     def move_to(self, r=0.5):
-        # 여기를 채우시오.
-        pass
+        self.state = 'Walk'
+        self.move_little_to(self.tx, self.ty)
+        if self.distance_less_than(self.tx, self.ty, self.x, self.y, r):
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
+
 
 
 
     def set_random_location(self):
-        # 여기를 채우시오.
-        pass
+        self.tx, self.ty = random.randint(100,1280 - 100), random.randint(100,1024 -100)
+        return BehaviorTree.SUCCESS
 
 
-    def if_boy_nearby(self, distance):
-        # 여기를 채우시오.
-        pass
+    def if_boy_nearby(self, r):
+        if self.distance_less_than(common.boy.x, common.boy.y, self.x, self.y, r):
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.FAIL
+
 
 
     def move_to_boy(self, r=0.5):
-        # 여기를 채우시오.
-        pass
+        self.state = 'Walk'
+        self.move_little_to(common.boy.x, common.boy.y)
+        if self.distance_less_than(common.boy.x, common.boy.y, self.x, self.y, r):
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
+
 
 
     def get_patrol_location(self):
-        # 여기를 채우시오.
-        pass
+        self.tx, self.ty = self.patrol_locations[self.loc_no]
+        self.loc_no = (self.loc_no +1) % len(self.patrol_locations)
+        return BehaviorTree.SUCCESS
+    
 
 
     def build_behavior_tree(self):
-        # 여기를 채우시오.
+        a1 = Action('Set target location', self.set_target_location, 1000,1000)
+        a2 = Action('Move to', self.move_to)
+        root = move_to_target_location = Sequence('Move to target location', a1, a2)
+
+        a3 = Action('Set random location', self.set_random_location)
+        root = wander = Sequence('Wander',a3,a2)
+
+        c1 = Condition('소년이 근처에 있는가?', self.if_boy_nearby,7)
+        a4 = Action('소년한테 접근', self.move_to_boy)
+        root = chase_boy = Sequence('소년을 추적', c1, a4)
+
+        root = chase_or_flee = Selector('추적 또는 배회', chase_boy, wander)
+        self.bt = BehaviorTree(root)
         pass
 
 
