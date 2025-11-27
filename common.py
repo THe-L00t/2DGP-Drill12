@@ -1,3 +1,2 @@
-
-boy = None  # Boy 인스턴스를 저장할 전역 변수
+boy = None # boy 객체를 저장할 전역 변수
 
